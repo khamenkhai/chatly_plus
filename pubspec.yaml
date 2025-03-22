@@ -1,6 +1,6 @@
 name: chatly_plus
 description: A feature-rich Flutter chat package based on Flyer Chat, with real-time "seen" indicators for messages. Supports Firestore, message read receipts, and an easy-to-use API.
-version: 0.0.1
+version: 0.0.2
 homepage: https://github.com/khamenkhai/kham_chat
 
 environment:

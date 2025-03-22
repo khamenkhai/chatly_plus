@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_chat_types/flutter_chat_types.dart' as types;
 
 import 'chatly_chat_core_config.dart';
@@ -39,8 +40,8 @@ class ChatlyChatCore {
 
   /// Sets custom config to change default names for rooms
   /// and users collections. Also see [ChatlyChatCoreConfig].
-  void setConfig(ChatlyChatCoreConfig ChatlyChatCoreConfig) {
-    config = ChatlyChatCoreConfig;
+  void setConfig(ChatlyChatCoreConfig chatlyChatCoreConfig) {
+    config = chatlyChatCoreConfig;
   }
 
   /// Creates a chat group room with [users]. Creator is automatically
@@ -394,10 +395,25 @@ class ChatlyChatCore {
           .collection('${config.roomsCollectionName}/$roomId/messages')
           .add(messageMap);
 
+      // Extract the text content of the message
+      String lastMessageText = '';
+      if (message is types.TextMessage) {
+        lastMessageText = message.text;
+      } else if (message is types.ImageMessage) {
+        lastMessageText = '📷 Image';
+      } else if (message is types.FileMessage) {
+        lastMessageText = '📄 File';
+      } else if (message is types.CustomMessage) {
+        lastMessageText = 'Custom Message';
+      }
+
       await getFirebaseFirestore()
           .collection(config.roomsCollectionName)
           .doc(roomId)
-          .update({'updatedAt': FieldValue.serverTimestamp()});
+          .update({
+        'updatedAt': FieldValue.serverTimestamp(),
+        'lastMsg': lastMessageText
+      });
     }
   }
 
@@ -530,5 +546,28 @@ class ChatlyChatCore {
   bool isMessageSeen(types.Message message) {
     final isSeen = message.metadata?['seen'] == true;
     return isSeen;
+  }
+
+  /// Fetches the custom `lastMsg` field for a specific room by its ID.
+  Future<String?> getLastMessage(String roomId) async {
+    try {
+      final roomDoc = await getFirebaseFirestore()
+          .collection(config.roomsCollectionName)
+          .doc(roomId)
+          .get();
+
+      if (roomDoc.exists) {
+        // Return the `lastMsg` field if it exists
+        return roomDoc.data()?['lastMsg'] as String?;
+      } else {
+        // Room document does not exist
+        return null;
+      }
+    } catch (e) {
+      if (kDebugMode) {
+        print('Error fetching last message: $e');
+      }
+      return null;
+    }
   }
 }
