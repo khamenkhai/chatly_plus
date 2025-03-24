@@ -1,4 +1,4 @@
-library flutter_firebase_chat_core;
+library chatly_plus;
 
 export 'src/chatly_chat_core.dart';
 export 'src/chatly_chat_core_config.dart';
